@@ -1,0 +1,36 @@
+{
+  "name": "curvvtech-server",
+  "version": "1.0.0",
+  "description": "Backend server for Curvvtech",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "express-rate-limit": "^6.3.0",
+    "helmet": "^5.0.2",
+    "joi": "^17.6.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.9",
+    "node-cron": "^3.0.0",
+    "passport": "^0.5.2",
+    "passport-jwt": "^4.0.0",
+    "rate-limit-redis": "^3.0.0",
+    "redis": "^4.0.6"
+  },
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "mongodb-memory-server": "^8.4.2",
+    "nodemon": "^2.0.15",
+    "supertest": "^6.2.2"
+  }
+}
