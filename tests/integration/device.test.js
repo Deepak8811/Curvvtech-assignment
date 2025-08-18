@@ -44,6 +44,33 @@ describe('Device Routes', () => {
             .expect(401);
     });
 
+    it('should filter devices by type and status', async () => {
+        // Create devices with different types and statuses
+        await request(app)
+            .post('/v1/devices')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'Active Sensor', type: 'sensor', status: 'active' });
+        await request(app)
+            .post('/v1/devices')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'Inactive Sensor', type: 'sensor', status: 'inactive' });
+        await request(app)
+            .post('/v1/devices')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'Active Light', type: 'light', status: 'active' });
+
+        // Filter by type=sensor and status=active
+        const res = await request(app)
+            .get('/v1/devices?type=sensor&status=active')
+            .set('Authorization', `Bearer ${token}`)
+            .expect(200);
+
+        expect(res.body.success).toBe(true);
+        expect(res.body.devices).toBeInstanceOf(Array);
+        expect(res.body.devices.length).toBe(1);
+        expect(res.body.devices[0].name).toBe('Active Sensor');
+    });
+
     it('should get all devices for an authenticated user', async () => {
         // Create a device first
         await request(app)
@@ -151,6 +178,37 @@ describe('Device Routes', () => {
         expect(res.body.success).toBe(true);
         expect(res.body.message).toBe('Device heartbeat recorded');
         expect(res.body.last_active_at).toBeDefined();
+    });
+
+    it('should get logs for a device with a limit', async () => {
+        const deviceRes = await request(app)
+            .post('/v1/devices')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ name: 'Log Limit Device', type: 'sensor' });
+        const deviceId = deviceRes.body.device.id;
+
+        // Create multiple logs
+        await request(app)
+            .post(`/v1/devices/${deviceId}/logs`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ event: 'units_consumed', value: 10 });
+        await request(app)
+            .post(`/v1/devices/${deviceId}/logs`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ event: 'units_consumed', value: 5 });
+        await request(app)
+            .post(`/v1/devices/${deviceId}/logs`)
+            .set('Authorization', `Bearer ${token}`)
+            .send({ event: 'units_consumed', value: 8 });
+
+        const res = await request(app)
+            .get(`/v1/devices/${deviceId}/logs?limit=2`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(200);
+
+        expect(res.body.success).toBe(true);
+        expect(res.body.logs).toBeInstanceOf(Array);
+        expect(res.body.logs.length).toBe(2);
     });
 
     it('should create a log for a device', async () => {
