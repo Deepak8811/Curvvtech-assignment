@@ -28,7 +28,7 @@ router.post('/:id/heartbeat', auth(), validate(deviceValidator.getDevice), devic
 
 router.route('/:id/logs')
     .post(auth(), validate(deviceValidator.getDevice), validate(logValidator.createLog), logController.createLog)
-    .get(auth(), validate(deviceValidator.getDevice), logController.getLogs);
+    .get(auth(), validate(deviceValidator.getDevice), validate(logValidator.getLogs), logController.getLogs);
 
 router.get('/:id/usage', auth(), validate(deviceValidator.getDevice), validate(logValidator.getUsage), logController.getUsage);
 

@@ -9,18 +9,23 @@ describe('Device Routes', () => {
 
     beforeEach(async () => {
         // Create a user and get a token
-        const userRes = await request(app)
+        await request(app)
             .post('/v1/auth/signup')
+            .send({ name: 'Device Test User', email: 'device-test@example.com', password: 'Password123!' });
+
+        const loginRes = await request(app)
+            .post('/v1/auth/login')
             .send({ email: 'device-test@example.com', password: 'Password123!' });
-        token = userRes.body.tokens.access.token;
-        userId = userRes.body.user.id;
+
+        token = loginRes.body.token;
+        userId = loginRes.body.user.id;
     });
 
     it('should create a device for an authenticated user', async () => {
         const res = await request(app)
             .post('/v1/devices')
             .set('Authorization', `Bearer ${token}`)
-            .send({ name: 'My Test Device', type: 'sensor' })
+            .send({ name: 'My Test Device', type: 'light' })
             .expect(201);
 
         expect(res.body.success).toBe(true);
@@ -82,10 +87,15 @@ describe('Device Routes', () => {
         const deviceId = deviceRes.body.device.id;
 
         // Create a second user and token
-        const anotherUserRes = await request(app)
+        await request(app)
             .post('/v1/auth/signup')
+            .send({ name: 'Another User', email: 'another@example.com', password: 'Password123!' });
+
+        const anotherLoginRes = await request(app)
+            .post('/v1/auth/login')
             .send({ email: 'another@example.com', password: 'Password123!' });
-        const anotherToken = anotherUserRes.body.tokens.access.token;
+
+        const anotherToken = anotherLoginRes.body.token;
 
         await request(app)
             .get(`/v1/devices/${deviceId}`)
@@ -139,8 +149,8 @@ describe('Device Routes', () => {
             .expect(200);
 
         expect(res.body.success).toBe(true);
-        expect(res.body.device.status).toBe('active');
-        expect(res.body.device.last_active_at).toBeDefined();
+        expect(res.body.message).toBe('Device heartbeat recorded');
+        expect(res.body.last_active_at).toBeDefined();
     });
 
     it('should create a log for a device', async () => {
@@ -185,6 +195,6 @@ describe('Device Routes', () => {
 
         expect(res.body.success).toBe(true);
         expect(res.body.usage).toBeDefined();
-        expect(res.body.usage.totalUsage).toBe(20);
+        expect(res.body.usage.total_usage).toBe(20);
     });
 });

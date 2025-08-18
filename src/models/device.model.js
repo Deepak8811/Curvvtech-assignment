@@ -37,10 +37,12 @@ deviceSchema.set('toJSON', {
     transform: (doc, ret) => {
         ret.last_active_at = ret.lastActiveAt;
         ret.owner_id = ret.ownerId;
+        delete ret._id;
         delete ret.lastActiveAt;
         delete ret.ownerId;
-        delete ret.id;
         delete ret.__v;
+        delete ret.createdAt;
+        delete ret.updatedAt;
         return ret;
     },
 });

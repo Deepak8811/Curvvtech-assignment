@@ -23,18 +23,18 @@ const createDevice = async (deviceBody, ownerId) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const queryDevices = async (filter, options, ownerId) => {
-    const limit = options.limit && parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 10;
-    const page = options.page && parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
-    const skip = (page - 1) * limit;
+const queryDevices = async (filter, ownerId) => {
+    // Ensure only 'type' and 'status' are used for filtering from the query params
+    const allowedFilters = ['type', 'status'];
+    const dbFilter = { ownerId };
 
-    const countPromise = Device.countDocuments({ ...filter, ownerId });
-    const docsPromise = Device.find({ ...filter, ownerId }).limit(limit).skip(skip);
+    Object.keys(filter).forEach((key) => {
+        if (allowedFilters.includes(key)) {
+            dbFilter[key] = filter[key];
+        }
+    });
 
-    const [totalResults, results] = await Promise.all([countPromise, docsPromise]);
-    const totalPages = Math.ceil(totalResults / limit);
-
-    return { results, page, limit, totalPages, totalResults };
+    return Device.find(dbFilter);
 };
 
 /**

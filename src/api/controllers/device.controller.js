@@ -6,17 +6,8 @@ const createDevice = async (req, res) => {
 };
 
 const getDevices = async (req, res) => {
-    const filter = { ...req.query };
-    delete filter.page;
-    delete filter.limit;
-
-    const options = {
-        page: req.query.page,
-        limit: req.query.limit,
-    };
-
-    const result = await deviceService.queryDevices(filter, options, req.user.id);
-    res.send({ success: true, ...result });
+    const devices = await deviceService.queryDevices(req.query, req.user.id);
+    res.send({ success: true, devices });
 };
 
 const getDevice = async (req, res) => {
@@ -48,7 +39,11 @@ const deleteDevice = async (req, res) => {
 const updateHeartbeat = async (req, res) => {
     try {
         const device = await deviceService.updateDeviceHeartbeat(req.params.id, req.user.id);
-        res.send({ success: true, message: `Heartbeat received at ${device.last_active_at.toISOString()}` });
+        res.send({
+            success: true,
+            message: 'Device heartbeat recorded',
+            last_active_at: device.lastActiveAt.toISOString(), // Use lastActiveAt before toJSON transform
+        });
     } catch (error) {
         res.status(404).send({ success: false, message: error.message });
     }

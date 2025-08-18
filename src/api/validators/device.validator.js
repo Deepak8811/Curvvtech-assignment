@@ -5,6 +5,7 @@ const createDevice = {
     body: Joi.object().keys({
         name: Joi.string().required(),
         type: Joi.string().required().valid('light', 'meter', 'thermostat', 'camera', 'other'),
+        status: Joi.string().valid('active', 'inactive', 'faulty'),
     }),
 };
 

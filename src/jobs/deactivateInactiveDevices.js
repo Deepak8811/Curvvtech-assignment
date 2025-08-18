@@ -1,16 +1,16 @@
 const cron = require('node-cron');
 const Device = require('../models/device.model');
 
-// This job runs every hour to deactivate devices that have been inactive for more than 30 minutes.
+// This job runs every hour to deactivate devices that have been inactive for more than 24 hours.
 const deactivateInactiveDevicesJob = cron.schedule('0 * * * *', async () => {
     console.log('Running job: Deactivate Inactive Devices');
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     try {
         const result = await Device.updateMany(
             { 
                 status: 'active',
-                lastActiveAt: { $lt: thirtyMinutesAgo } 
+                lastActiveAt: { $lt: twentyFourHoursAgo } 
             },
             { $set: { status: 'inactive' } }
         );

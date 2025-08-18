@@ -90,8 +90,9 @@ const getUsageAnalytics = async (deviceId, ownerId, range = '24h') => {
     ]);
 
     return {
+        device_id: device.id,
         range,
-        totalUsage: result.length > 0 ? result[0].totalUsage : 0,
+        total_usage: result.length > 0 ? result[0].totalUsage : 0,
     };
 };
 
