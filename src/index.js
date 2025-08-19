@@ -1,47 +1,47 @@
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const config = require('./config/config');
-const deactivateInactiveDevicesJob = require('./jobs/deactivateInactiveDevices');
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import passport from "passport";
 
-const connectDB = require('./config/db');
+import config from "./config/index.js";
+import connectDB from "./config/db.js";
+import deactivateInactiveDevicesJob from "./jobs/deactivateInactiveDevices.js";
+import routes from "./api/routes/index.js";
 
-const passport = require('passport');
 const app = express();
 
-// Initialize passport
-app.use(passport.initialize());
-
-// Connect to database
+/* -------------------- Database Connection -------------------- */
 connectDB();
 
-// Set security HTTP headers
+/* -------------------- Middlewares -------------------- */
+// Security headers
 app.use(helmet());
 
 // Enable CORS
 app.use(cors());
-app.options('*', cors());
+app.options("*", cors());
 
-// Parse json request body
+// Parse JSON requests
 app.use(express.json());
 
-const routes = require('./api/routes');
+// Initialize Passport for authentication
+app.use(passport.initialize());
 
-// v1 api routes
-app.use('/v1', routes);
+/* -------------------- API Routes -------------------- */
+app.use("/v1", routes);
 
-app.get('/health', (req, res) => {
-    res.status(200).send({ status: 'ok' });
+// Health Check
+app.get("/health", (_, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
-// Start background jobs
+/* -------------------- Background Jobs -------------------- */
 deactivateInactiveDevicesJob.start();
-console.log('Deactivate inactive devices job scheduled.');
+console.log("Deactivate inactive devices job scheduled.");
 
-// Start server
+/* -------------------- Start Server -------------------- */
 app.listen(config.port, () => {
-  console.log(`Listening to port ${config.port}`);
+  console.log(`Server running on port ${config.port}`);
 });
 
-module.exports = app;
+export default app;

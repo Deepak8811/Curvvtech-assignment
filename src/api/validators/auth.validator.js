@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const register = {
     body: Joi.object().keys({
@@ -16,7 +16,4 @@ const login = {
     }),
 };
 
-module.exports = {
-    register,
-    login,
-};
+export default { register, login };

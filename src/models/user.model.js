@@ -1,50 +1,67 @@
-const mongoose = require('mongoose');
-const { hashPassword } = require('../utils/password');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            required: true,
+            required: [true, "Name is required"],
             trim: true,
+            minlength: [2, "Name must be at least 2 characters long"],
+            maxlength: [50, "Name cannot exceed 50 characters"],
         },
         email: {
             type: String,
-            required: true,
+            required: [true, "Email is required"],
             unique: true,
-            trim: true,
             lowercase: true,
+            trim: true,
+            match: [
+                /^\S+@\S+\.\S+$/,
+                "Please provide a valid email address",
+            ],
+            index: true, // Faster queries on email
         },
         password: {
             type: String,
-            required: true,
-            minlength: 8,
-            private: true, // Do not return password by default
+            required: [true, "Password is required"],
+            minlength: [8, "Password must be at least 8 characters long"],
+            select: false, // Never return password by default
         },
         role: {
             type: String,
-            enum: ['user', 'admin'],
-            default: 'user',
+            enum: ["user", "admin"],
+            default: "user",
         },
     },
     { timestamps: true }
 );
 
-// Pre-save hook to hash password
-userSchema.pre('save', async function (next) {
-    if (this.isModified('password')) {
-        this.password = await hashPassword(this.password);
+// Pre-save hook to hash password before saving
+userSchema.pre("save", async function (next) {
+    try {
+        if (this.isModified("password")) {
+            const salt = await bcrypt.genSalt(12); // strong salt rounds
+            this.password = await bcrypt.hash(this.password, salt);
+        }
+        next();
+    } catch (error) {
+        next(error);
     }
-    next();
 });
 
-// Method to exclude password from JSON output
-userSchema.methods.toJSON = function () {
-    const userObject = this.toObject();
-    delete userObject.password;
-    return userObject;
+// Method to compare password during login
+userSchema.methods.isPasswordMatch = async function (candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+// Customize JSON response (remove sensitive data)
+userSchema.methods.toJSON = function () {
+    const obj = this.toObject();
+    delete obj.password;
+    delete obj.__v;
+    return obj;
+};
 
-module.exports = User;
+const User = mongoose.model("User", userSchema);
+export default User;

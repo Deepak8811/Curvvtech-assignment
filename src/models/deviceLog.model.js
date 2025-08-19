@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const deviceLogSchema = new mongoose.Schema(
     {
@@ -44,4 +44,4 @@ deviceLogSchema.index({ deviceId: 1, ownerId: 1, event: 1, createdAt: -1 });
 
 const DeviceLog = mongoose.model('DeviceLog', deviceLogSchema);
 
-module.exports = DeviceLog;
+export default DeviceLog;

@@ -1,6 +1,6 @@
-const userService = require('./user.service');
-const tokenService = require('./token.service');
-const { comparePassword } = require('../utils/password');
+import userService from './user.service.js';
+import tokenService from './token.service.js';
+import { comparePassword } from '../utils/password.js';
 
 /**
  * Login with username and password
@@ -17,6 +17,6 @@ const loginUserWithEmailAndPassword = async (email, password) => {
     return { user, tokens };
 };
 
-module.exports = {
+export default {
     loginUserWithEmailAndPassword,
 };

@@ -1,6 +1,7 @@
 {
   "name": "curvvtech-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend server for Curvvtech",
   "main": "src/index.js",
   "scripts": {
@@ -14,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.17.3",

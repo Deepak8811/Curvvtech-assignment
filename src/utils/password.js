@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 
 const saltRounds = 12; // As per the guide's recommendation (cost >= 12)
 
@@ -21,7 +21,4 @@ const comparePassword = async (password, hash) => {
     return bcrypt.compare(password, hash);
 };
 
-module.exports = {
-    hashPassword,
-    comparePassword,
-};
+export { hashPassword, comparePassword };

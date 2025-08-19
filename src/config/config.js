@@ -1,6 +1,10 @@
-const dotenv = require('dotenv');
-const path = require('path');
-const Joi = require('joi');
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import Joi from 'joi';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -17,17 +21,19 @@ const envVarsSchema = Joi.object()
   })
   .unknown();
 
-const { value: envVars, error } = envVarsSchema.prefs({ errors: { label: 'key' } }).validate(process.env);
+const { value: envVars, error } = envVarsSchema
+  .prefs({ errors: { label: 'key' } })
+  .validate(process.env);
 
 if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
-module.exports = {
+const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   mongoose: {
-    url: envVars.MONGO_URI + (envVars.NODE_ENV === 'test' ? '-test' : ''),
+    uri: envVars.MONGO_URI + (envVars.NODE_ENV === 'test' ? '-test' : ''), // 👈 should be "uri" (not "url")
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -36,7 +42,9 @@ module.exports = {
   jwt: {
     accessSecret: envVars.JWT_ACCESS_SECRET,
     refreshSecret: envVars.JWT_REFRESH_SECRET,
-    accessExpirationMinutes: envVars.JWT_ACCESS_TTL,
-    refreshExpirationDays: envVars.JWT_REFRESH_TTL,
+    accessExpiration: envVars.JWT_ACCESS_TTL,
+    refreshExpiration: envVars.JWT_REFRESH_TTL,
   },
 };
+
+export default config;

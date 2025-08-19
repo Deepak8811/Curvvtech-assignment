@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config/config');
+import jwt from 'jsonwebtoken';
+import config from '../config/index.js';
 
 /**
  * Generate token
@@ -43,6 +43,6 @@ const generateAuthTokens = async (user) => {
   };
 };
 
-module.exports = {
+export default {
   generateAuthTokens,
 };

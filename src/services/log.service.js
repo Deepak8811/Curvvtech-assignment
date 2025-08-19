@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const DeviceLog = require('../models/deviceLog.model');
-const deviceService = require('./device.service');
+import mongoose from 'mongoose';
+import DeviceLog from '../models/deviceLog.model.js';
+import * as deviceService from './device.service.js';
 
 /**
  * Create a device log
@@ -96,8 +96,4 @@ const getUsageAnalytics = async (deviceId, ownerId, range = '24h') => {
     };
 };
 
-module.exports = {
-    createLog,
-    getRecentLogs,
-    getUsageAnalytics,
-};
+export { createLog, getRecentLogs, getUsageAnalytics };

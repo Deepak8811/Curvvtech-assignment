@@ -1,15 +1,39 @@
-const express = require('express');
-const validate = require('../middlewares/validate');
-const { authLimiter } = require('../middlewares/rateLimiter');
-const authValidation = require('../validators/auth.validator');
-const authController = require('../controllers/auth.controller');
+import express from 'express';
+import validate from '../middlewares/validate.js';
+import { authLimiter } from '../middlewares/rateLimiter.js';
+import authValidation from '../validators/auth.validator.js';
+import authController from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
-// Apply rate limiter to all auth routes
+/**
+ * Authentication Routes
+ * Prefix: /api/auth
+ */
+
+// Apply rate limiter only to sensitive routes (login, signup)
 router.use(authLimiter);
 
-router.post('/signup', validate(authValidation.register.body), authController.register);
-router.post('/login', validate(authValidation.login.body), authController.login);
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
+ * @access  Public
+ */
+router.post(
+  '/register',
+  validate(authValidation.register),
+  authController.register
+);
 
-module.exports = router;
+/**
+ * @route   POST /api/auth/login
+ * @desc    Authenticate user & return token
+ * @access  Public
+ */
+router.post(
+  '/login',
+  validate(authValidation.login),
+  authController.login
+);
+
+export default router;

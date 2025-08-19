@@ -1,23 +1,20 @@
-const express = require('express');
-const authRoute = require('./auth.route');
+import express from "express";
+import authRoute from "./auth.route.js";
+import deviceRoute from "./device.route.js";
 
 const router = express.Router();
 
-const deviceRoute = require('./device.route');
-
+/**
+ * List of all default routes
+ */
 const defaultRoutes = [
-    {
-        path: '/auth',
-        route: authRoute,
-    },
-    {
-        path: '/devices',
-        route: deviceRoute,
-    },
+    { path: "/auth", route: authRoute },
+    { path: "/devices", route: deviceRoute },
 ];
 
-defaultRoutes.forEach((route) => {
-    router.use(route.path, route.route);
+// Register default routes
+defaultRoutes.forEach(({ path, route }) => {
+    router.use(path, route);
 });
 
-module.exports = router;
+export default router;

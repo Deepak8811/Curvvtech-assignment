@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const validate = (schema) => (req, res, next) => {
     const validSchema = Joi.compile(schema);
@@ -13,4 +13,4 @@ const validate = (schema) => (req, res, next) => {
     return next();
 };
 
-module.exports = validate;
+export default validate;

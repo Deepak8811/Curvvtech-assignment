@@ -1,7 +1,7 @@
-const passport = require('passport');
-const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
-const config = require('../../config');
-const User = require('../../models/user.model');
+import passport from 'passport';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import config from '../../config/index.js';
+import User from '../../models/user.model.js';
 
 const jwtOptions = {
     secretOrKey: config.jwt.accessSecret,
@@ -26,4 +26,4 @@ passport.use(jwtStrategy);
 
 const auth = () => passport.authenticate('jwt', { session: false });
 
-module.exports = auth;
+export default auth;

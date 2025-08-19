@@ -1,4 +1,4 @@
-const Device = require('../models/device.model');
+import Device from '../models/device.model.js';
 
 /**
  * Create a device
@@ -23,8 +23,7 @@ const createDevice = async (deviceBody, ownerId) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const queryDevices = async (filter, ownerId) => {
-    // Ensure only 'type' and 'status' are used for filtering from the query params
+const queryDevices = async (filter, ownerId, options = {}) => {
     const allowedFilters = ['type', 'status'];
     const dbFilter = { ownerId };
 
@@ -34,7 +33,24 @@ const queryDevices = async (filter, ownerId) => {
         }
     });
 
-    return Device.find(dbFilter);
+    const { sortBy = 'createdAt:desc', limit = 10, page = 1 } = options;
+    const [sortField, sortOrder] = sortBy.split(':');
+    const sort = { [sortField]: sortOrder === 'desc' ? -1 : 1 };
+
+    const devices = await Device.find(dbFilter)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+    const totalResults = await Device.countDocuments(dbFilter);
+
+    return {
+        devices,
+        page,
+        limit,
+        totalPages: Math.ceil(totalResults / limit),
+        totalResults,
+    };
 };
 
 /**
@@ -89,7 +105,7 @@ const updateDeviceHeartbeat = async (deviceId, ownerId) => {
     return updateDeviceById(deviceId, { lastActiveAt: new Date(), status: 'active' }, ownerId);
 };
 
-module.exports = {
+export default {
     createDevice,
     queryDevices,
     getDeviceById,

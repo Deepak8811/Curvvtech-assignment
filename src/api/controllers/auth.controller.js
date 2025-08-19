@@ -1,27 +1,58 @@
-const userService = require('../../services/user.service');
-const authService = require('../../services/auth.service');
+import userService from '../../services/user.service.js';
+import authService from '../../services/auth.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
-const register = async (req, res) => {
-    try {
-        const user = await userService.createUser(req.body);
-        await userService.createUser(req.body);
-        res.status(201).send({ success: true, message: 'User registered successfully' });
-    } catch (error) {
-        res.status(400).send({ success: false, message: error.message });
-    }
-};
+/**
+ * @desc    Register a new user
+ * @route   POST /v1/auth/register
+ * @access  Public
+ */
+const register = asyncHandler(async (req, res) => {
+    const user = await userService.createUser(req.body);
 
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const { user, tokens } = await authService.loginUserWithEmailAndPassword(email, password);
-        res.send({ success: true, token: tokens.access.token, user });
-    } catch (error) {
-        res.status(401).send({ success: false, message: error.message });
-    }
-};
+    // Generate auth tokens after successful registration
+    const tokens = await authService.generateAuthTokens(user);
 
-module.exports = {
+    return res.status(201).json({
+        success: true,
+        message: 'User registered successfully',
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+        tokens,
+    });
+});
+
+/**
+ * @desc    Login user
+ * @route   POST /v1/auth/login
+ * @access  Public
+ */
+const login = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    const { user, tokens } = await authService.loginUserWithEmailAndPassword(
+        email,
+        password
+    );
+
+    return res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+        tokens,
+    });
+});
+
+export default {
     register,
     login,
 };

@@ -1,18 +1,21 @@
-const express = require('express');
-const auth = require('../middlewares/auth');
-const validate = require('../middlewares/validate');
-const deviceValidator = require('../validators/device.validator');
-const deviceController = require('../controllers/device.controller');
-const logController = require('../controllers/log.controller');
-const logValidator = require('../validators/log.validator');
-
-const { apiLimiter } = require('../middlewares/rateLimiter');
+import express from 'express';
+import auth from '../middlewares/auth.js';
+import validate from '../middlewares/validate.js';
+import deviceValidator from '../validators/device.validator.js';
+import deviceController from '../controllers/device.controller.js';
+import logController from '../controllers/log.controller.js';
+import logValidator from '../validators/log.validator.js';
+import { apiLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
 // Apply user-based rate limiting to all device routes
 router.use(apiLimiter);
 
+/**
+ * @route   /api/devices
+ * @desc    Device CRUD
+ */
 router
     .route('/')
     .post(auth(), validate(deviceValidator.createDevice), deviceController.createDevice)
@@ -24,12 +27,46 @@ router
     .patch(auth(), validate(deviceValidator.updateDevice), deviceController.updateDevice)
     .delete(auth(), validate(deviceValidator.deleteDevice), deviceController.deleteDevice);
 
-router.post('/:id/heartbeat', auth(), validate(deviceValidator.getDevice), deviceController.updateHeartbeat);
+/**
+ * @route   POST /api/devices/:id/heartbeat
+ * @desc    Update device heartbeat
+ */
+router.post(
+    '/:id/heartbeat',
+    auth(),
+    validate(deviceValidator.getDevice),
+    deviceController.updateHeartbeat
+);
 
-router.route('/:id/logs')
-    .post(auth(), validate(deviceValidator.getDevice), validate(logValidator.createLog), logController.createLog)
-    .get(auth(), validate(deviceValidator.getDevice), validate(logValidator.getLogs), logController.getLogs);
+/**
+ * @route   /api/devices/:id/logs
+ * @desc    Create and fetch device logs
+ */
+router
+    .route('/:id/logs')
+    .post(
+        auth(),
+        validate(deviceValidator.getDevice),
+        validate(logValidator.createLog),
+        logController.createLog
+    )
+    .get(
+        auth(),
+        validate(deviceValidator.getDevice),
+        validate(logValidator.getLogs),
+        logController.getLogs
+    );
 
-router.get('/:id/usage', auth(), validate(deviceValidator.getDevice), validate(logValidator.getUsage), logController.getUsage);
+/**
+ * @route   GET /api/devices/:id/usage
+ * @desc    Get device usage stats
+ */
+router.get(
+    '/:id/usage',
+    auth(),
+    validate(deviceValidator.getDevice),
+    validate(logValidator.getUsage),
+    logController.getUsage
+);
 
-module.exports = router;
+export default router;

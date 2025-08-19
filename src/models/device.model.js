@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const deviceSchema = new mongoose.Schema(
     {
@@ -88,4 +88,4 @@ deviceSchema.index({ status: 1, lastActiveAt: -1 });
 
 const Device = mongoose.model('Device', deviceSchema);
 
-module.exports = Device;
+export default Device;

@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const createLog = {
     body: Joi.object().keys({
@@ -19,8 +19,4 @@ const getUsage = {
     }),
 };
 
-module.exports = {
-    createLog,
-    getLogs,
-    getUsage,
-};
+export default { createLog, getLogs, getUsage };

@@ -1,55 +1,74 @@
-const deviceService = require('../../services/device.service');
+import deviceService from '../../services/device.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
-const createDevice = async (req, res) => {
+/**
+ * @desc    Create new device
+ * @route   POST /api/devices
+ * @access  Private
+ */
+const createDevice = asyncHandler(async (req, res) => {
     const device = await deviceService.createDevice(req.body, req.user.id);
-    res.status(201).send({ success: true, device });
-};
+    res.status(201).json({ success: true, message: 'Device created successfully', data: device });
+});
 
-const getDevices = async (req, res) => {
+/**
+ * @desc    Get all devices for user
+ * @route   GET /api/devices
+ * @access  Private
+ */
+const getDevices = asyncHandler(async (req, res) => {
     const devices = await deviceService.queryDevices(req.query, req.user.id);
-    res.send({ success: true, devices });
-};
+    res.json({ success: true, data: devices });
+});
 
-const getDevice = async (req, res) => {
+/**
+ * @desc    Get single device
+ * @route   GET /api/devices/:id
+ * @access  Private
+ */
+const getDevice = asyncHandler(async (req, res) => {
     const device = await deviceService.getDeviceById(req.params.id, req.user.id);
     if (!device) {
-        return res.status(404).send({ success: false, message: 'Device not found' });
+        return res.status(404).json({ success: false, message: 'Device not found' });
     }
-    res.send({ success: true, device });
-};
+    res.json({ success: true, data: device });
+});
 
-const updateDevice = async (req, res) => {
-    try {
-        const device = await deviceService.updateDeviceById(req.params.id, req.body, req.user.id);
-        res.send({ success: true, device });
-    } catch (error) {
-        res.status(404).send({ success: false, message: error.message });
-    }
-};
+/**
+ * @desc    Update device
+ * @route   PUT /api/devices/:id
+ * @access  Private
+ */
+const updateDevice = asyncHandler(async (req, res) => {
+    const device = await deviceService.updateDeviceById(req.params.id, req.body, req.user.id);
+    res.json({ success: true, message: 'Device updated successfully', data: device });
+});
 
-const deleteDevice = async (req, res) => {
-    try {
-        await deviceService.deleteDeviceById(req.params.id, req.user.id);
-        res.status(200).send({ success: true, message: 'Device deleted successfully' });
-    } catch (error) {
-        res.status(404).send({ success: false, message: error.message });
-    }
-};
+/**
+ * @desc    Delete device
+ * @route   DELETE /api/devices/:id
+ * @access  Private
+ */
+const deleteDevice = asyncHandler(async (req, res) => {
+    await deviceService.deleteDeviceById(req.params.id, req.user.id);
+    res.json({ success: true, message: 'Device deleted successfully' });
+});
 
-const updateHeartbeat = async (req, res) => {
-    try {
-        const device = await deviceService.updateDeviceHeartbeat(req.params.id, req.user.id);
-        res.send({
-            success: true,
-            message: 'Device heartbeat recorded',
-            last_active_at: device.lastActiveAt.toISOString(), // Use lastActiveAt before toJSON transform
-        });
-    } catch (error) {
-        res.status(404).send({ success: false, message: error.message });
-    }
-};
+/**
+ * @desc    Update device heartbeat (last active timestamp)
+ * @route   PATCH /api/devices/:id/heartbeat
+ * @access  Private
+ */
+const updateHeartbeat = asyncHandler(async (req, res) => {
+    const device = await deviceService.updateDeviceHeartbeat(req.params.id, req.user.id);
+    res.json({
+        success: true,
+        message: 'Device heartbeat recorded',
+        last_active_at: device.lastActiveAt?.toISOString() || null,
+    });
+});
 
-module.exports = {
+export default {
     createDevice,
     getDevices,
     getDevice,
