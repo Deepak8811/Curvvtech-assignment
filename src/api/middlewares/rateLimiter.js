@@ -1,38 +1,35 @@
 const rateLimit = require('express-rate-limit');
-const { createClient } = require('redis');
-const RedisStore = require('rate-limit-redis');
 const config = require('../../config');
 
-// Create a Redis client
-const redisClient = createClient({ url: config.redis.url });
-
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-
-(async () => {
-    await redisClient.connect();
-})();
-
+// In-memory rate limiters
+// Rate limiting for authentication endpoints
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 requests per windowMs
-    store: new RedisStore({
-        sendCommand: (...args) => redisClient.sendCommand(args),
-    }),
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' },
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // Strict limit for auth endpoints
+    keyGenerator: (req) => req.ip, // Rate limit by IP for auth endpoints
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { 
+        success: false, 
+        message: 'Too many login attempts, please try again after a minute' 
+    },
 });
 
+// General API rate limiting
 const apiLimiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: config.rateLimit.max,
-    store: new RedisStore({
-        sendCommand: (...args) => redisClient.sendCommand(args),
-    }),
-    keyGenerator: (req) => req.user.id, // Use user ID for authenticated requests
+    keyGenerator: (req) => req.user?.id || req.ip, // User-based rate limiting
     standardHeaders: true,
     legacyHeaders: false,
-    message: { success: false, message: 'Too many requests, please try again later' },
+    message: { 
+        success: false, 
+        message: 'Too many requests, please try again in a minute' 
+    },
+    skip: (req) => {
+        // Skip rate limiting for certain endpoints if needed
+        return req.path === '/health' || req.method === 'OPTIONS';
+    }
 });
 
 module.exports = {

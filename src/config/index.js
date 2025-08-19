@@ -41,7 +41,7 @@ module.exports = {
         url: envVars.REDIS_URL,
     },
     rateLimit: {
-        max: envVars.RATE_LIMIT_MAX,
-        windowMs: envVars.RATE_LIMIT_WINDOW_MS,
+        windowMs: 60 * 1000, // 1 minute
+        max: 100, // limit each user to 100 requests per minute
     },
 };

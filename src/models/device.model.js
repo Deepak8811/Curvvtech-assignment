@@ -20,6 +20,16 @@ const deviceSchema = new mongoose.Schema(
         lastActiveAt: {
             type: Date,
             default: null,
+            index: true, // Add index for faster queries
+        },
+        lastStatusChange: {
+            type: Date,
+            default: Date.now,
+        },
+        metadata: {
+            type: Map,
+            of: String,
+            default: {},
         },
         ownerId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -47,7 +57,33 @@ deviceSchema.set('toJSON', {
     },
 });
 
-// Compound index for the background job
+// Add compound index for the background job
+// This index will help with the deactivateInactiveDevices job
+// and for querying active devices
+// The order of fields is important for query performance
+deviceSchema.index(
+    { 
+        status: 1, 
+        lastActiveAt: 1,
+        ownerId: 1 
+    },
+    { 
+        name: 'inactive_devices_query',
+        partialFilterExpression: { status: 'active' } // Only index active devices
+    }
+);
+
+// Add text index for search functionality
+deviceSchema.index(
+    { name: 'text', type: 'text' },
+    { 
+        name: 'devices_text_search',
+        weights: {
+            name: 3,    // Higher weight to name
+            type: 1     // Lower weight to type
+        }
+    }
+);
 deviceSchema.index({ status: 1, lastActiveAt: -1 });
 
 const Device = mongoose.model('Device', deviceSchema);
