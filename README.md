@@ -93,7 +93,7 @@ A robust, production-ready backend service for managing users and IoT devices. B
    RATE_LIMIT_MAX_REQUESTS=100
    ```
 
-## 🏃‍♂️ Running the Application
+##  Running the Application
 
 ### Development Mode
 ```bash
