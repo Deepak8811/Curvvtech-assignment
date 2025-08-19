@@ -1,50 +1,50 @@
-name: Node.js CI
+name: Node.js CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
 
     services:
       mongo:
         image: mongo:latest
         ports:
           - 27017:27017
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-
-    strategy:
-      matrix:
-        node-version: [16.x]
+        options: --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci
+
+    - name: Run linter
+      run: npm run lint # Assumes you have a "lint" script in package.json
+
+    - name: Run security audit
+      run: npm audit --production
 
     - name: Run tests
       run: npm test
       env:
         PORT: 3000
-        MONGO_URI: mongodb://localhost:27017/curvvtech-test
-        REDIS_URL: redis://localhost:6379
+        MONGO_URI: mongodb://mongo:27017/curvvtech-test
         JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
         JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         JWT_ACCESS_TTL: 15m
         JWT_REFRESH_TTL: 1d
-        RATE_LIMIT_MAX: 100
-        RATE_LIMIT_WINDOW_MS: 900000
