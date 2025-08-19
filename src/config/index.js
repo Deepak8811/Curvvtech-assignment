@@ -9,14 +9,13 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const envVarsSchema = Joi.object({
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
     PORT: Joi.number().default(3000),
-    MONGO_URI: Joi.string().required().description('Mongo DB url'),
+    MONGO_URI: Joi.string().required().description('MongoDB connection string'),
     JWT_ACCESS_SECRET: Joi.string().required().description('JWT access secret key'),
     JWT_REFRESH_SECRET: Joi.string().required().description('JWT refresh secret key'),
     JWT_ACCESS_TTL: Joi.string().default('15m').description('JWT access token time to live'),
     JWT_REFRESH_TTL: Joi.string().default('7d').description('JWT refresh token time to live'),
-    REDIS_URL: Joi.string().required().description('Redis url'),
-    RATE_LIMIT_MAX: Joi.number().default(100),
-    RATE_LIMIT_WINDOW_MS: Joi.number().default(60000),
+    RATE_LIMIT_MAX: Joi.number().default(100).description('Maximum requests per window per IP'),
+    RATE_LIMIT_WINDOW_MS: Joi.number().default(60000).description('Rate limit window in milliseconds'),
 }).unknown();
 
 const { value: envVars, error } = envVarsSchema.prefs({ errors: { label: 'key' } }).validate(process.env);
@@ -37,11 +36,8 @@ module.exports = {
         accessExpiration: envVars.JWT_ACCESS_TTL,
         refreshExpiration: envVars.JWT_REFRESH_TTL,
     },
-    redis: {
-        url: envVars.REDIS_URL,
-    },
     rateLimit: {
-        windowMs: 60 * 1000, // 1 minute
-        max: 100, // limit each user to 100 requests per minute
+        windowMs: envVars.RATE_LIMIT_WINDOW_MS,
+        max: envVars.RATE_LIMIT_MAX,
     },
 };
