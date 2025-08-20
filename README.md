@@ -139,7 +139,11 @@ docker-compose down
 ##  API Documentation
 
 ### Base URL
-All endpoints are prefixed with `/api/v1`.
+All endpoints are prefixed with `/v1`.
+
+### Postman Documentation
+For detailed API documentation with examples, please refer to our Postman collection:
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://documenter.getpostman.com/view/47707645/2sB3BKFU2U)
 
 ### Authentication
 All endpoints except `/auth/*` require a valid JWT token in the `Authorization` header:

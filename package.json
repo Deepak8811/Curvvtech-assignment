@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --runInBand --detectOpenHandles --forceExit",
-    "test:unit": "jest --runInBand --detectOpenHandles --forceExit tests/unit"
+    "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:unit": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js tests/unit"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +29,10 @@
     "passport-jwt": "^4.0.0"
   },
   "devDependencies": {
-    "jest": "^27.5.1",
+    "@babel/core": "^7.22.1",
+    "@babel/preset-env": "^7.22.4",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
     "mongodb-memory-server": "^8.4.2",
     "nodemon": "^2.0.15",
     "supertest": "^6.2.2"

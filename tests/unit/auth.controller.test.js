@@ -1,10 +1,26 @@
-const authController = require('../../src/api/controllers/auth.controller');
-const userService = require('../../src/services/user.service');
-const authService = require('../../src/services/auth.service');
+import { jest } from '@jest/globals';
+import authController from '../../src/api/controllers/auth.controller.js';
+import userService from '../../src/services/user.service.js';
+import authService from '../../src/services/auth.service.js';
+import tokenService from '../../src/services/token.service.js';
 
-// Mock the services
-jest.mock('../../src/services/user.service');
-jest.mock('../../src/services/auth.service');
+// Mock the services with proper jest.fn() mocks
+const mockUserService = {
+  createUser: jest.fn()
+};
+
+const mockAuthService = {
+  loginUserWithEmailAndPassword: jest.fn()
+};
+
+const mockTokenService = {
+  generateAuthTokens: jest.fn()
+};
+
+jest.mock('../../src/services/user.service.js', () => mockUserService);
+jest.mock('../../src/services/auth.service.js', () => mockAuthService);
+jest.mock('../../src/services/token.service.js', () => mockTokenService);
+
 
 describe('Auth Controller Unit Tests', () => {
     let mockReq, mockRes, mockNext;
@@ -12,50 +28,80 @@ describe('Auth Controller Unit Tests', () => {
     beforeEach(() => {
         // Reset all mocks before each test
         jest.clearAllMocks();
-        
+
         // Setup mock request and response objects
         mockReq = {
             body: {}
         };
-        
+
         mockRes = {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
             json: jest.fn()
         };
-        
+
         mockNext = jest.fn();
     });
 
     describe('register', () => {
         it('should register a new user successfully', async () => {
-            // Arrange
             const userData = {
-                name: 'Test User',
-                email: 'test@example.com',
-                password: 'Password123!'
+                name: 'Deepak chaurasiya',
+                email: 'deepchaurasiya1997@gmial.com',
+                password: '12345678'
             };
             mockReq.body = userData;
-            
+
             // Mock the userService.createUser to resolve successfully
-            userService.createUser.mockResolvedValue({});
+            const mockUser = { 
+                ...userData,
+                _id: '123',
+                toObject: () => ({
+                    id: '123',
+                    name: userData.name,
+                    email: userData.email,
+                    role: 'user'
+                })
+            };
+            
+            // Mock the token service
+            const mockTokens = { access: { token: 'test-token' } };
+            mockTokenService.generateAuthTokens.mockResolvedValue(mockTokens);
+            mockUserService.createUser.mockResolvedValue(mockUser);
 
             // Act
             await authController.register(mockReq, mockRes);
 
             // Assert
-            expect(userService.createUser).toHaveBeenCalledWith(userData);
+            expect(userService.createUser).toHaveBeenCalledWith(expect.objectContaining({
+                name: userData.name,
+                email: userData.email,
+                password: expect.any(String) // Password should be hashed
+            }));
+            
+            expect(tokenService.generateAuthTokens).toHaveBeenCalledWith(expect.objectContaining({
+                id: '123',
+                name: userData.name,
+                email: userData.email
+            }));
+            
             expect(mockRes.status).toHaveBeenCalledWith(201);
-            expect(mockRes.send).toHaveBeenCalledWith({
+            expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
-                message: 'User registered successfully'
+                token: 'test-token',
+                user: {
+                    id: '123',
+                    name: userData.name,
+                    email: userData.email,
+                    role: 'user'
+                }
             });
         });
 
         it('should handle registration errors', async () => {
             // Arrange
             const error = new Error('Registration failed');
-            userService.createUser.mockRejectedValue(error);
+            mockUserService.createUser.mockRejectedValue(error);
 
             // Act
             await authController.register(mockReq, mockRes);
@@ -77,11 +123,11 @@ describe('Auth Controller Unit Tests', () => {
                 password: 'Password123!'
             };
             mockReq.body = credentials;
-            
+
             const mockUser = { id: '1', email: 'test@example.com' };
             const mockTokens = { access: { token: 'mock-token' } };
-            
-            authService.loginUserWithEmailAndPassword.mockResolvedValue({
+
+            mockAuthService.loginUserWithEmailAndPassword.mockResolvedValue({
                 user: mockUser,
                 tokens: mockTokens
             });
@@ -104,7 +150,7 @@ describe('Auth Controller Unit Tests', () => {
         it('should handle login errors', async () => {
             // Arrange
             const error = new Error('Invalid credentials');
-            authService.loginUserWithEmailAndPassword.mockRejectedValue(error);
+            mockAuthService.loginUserWithEmailAndPassword.mockRejectedValue(error);
 
             // Act
             await authController.login(mockReq, mockRes);

@@ -1,245 +1,188 @@
-const deviceController = require('../../src/api/controllers/device.controller');
-const deviceService = require('../../src/services/device.service');
+import { jest } from '@jest/globals';
+import deviceController from '../../src/api/controllers/device.controller.js';
+import deviceService from '../../src/services/device.service.js';
 
-// Mock the device service
-jest.mock('../../src/services/device.service');
+// Mock the service with proper jest.fn() mocks
+const mockDeviceService = {
+  createDevice: jest.fn(),
+  queryDevices: jest.fn(),
+  getDeviceById: jest.fn(),
+  updateDeviceById: jest.fn(),
+  deleteDeviceById: jest.fn(),
+  updateDeviceHeartbeat: jest.fn()
+};
+
+jest.mock('../../src/services/device.service.js', () => mockDeviceService);
+
 
 describe('Device Controller Unit Tests', () => {
-    let mockReq, mockRes, mockNext;
+    let mockReq, mockRes;
     const mockUser = { id: 'user123' };
     const mockDevice = {
         id: 'device123',
         name: 'Test Device',
         userId: 'user123',
         lastActiveAt: new Date(),
-        toJSON: function() { return { ...this, lastActiveAt: this.lastActiveAt.toISOString() } }
+        toJSON() {
+            return { ...this, lastActiveAt: this.lastActiveAt.toISOString() };
+        }
     };
 
     beforeEach(() => {
-        // Reset all mocks before each test
         jest.clearAllMocks();
-        
-        // Setup mock request and response objects
+
         mockReq = {
             params: {},
             body: {},
             query: {},
             user: { ...mockUser }
         };
-        
+
         mockRes = {
             status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
             json: jest.fn()
         };
-        
-        mockNext = jest.fn();
     });
 
     describe('createDevice', () => {
         it('should create a new device successfully', async () => {
-            // Arrange
-            const deviceData = { name: 'Test Device', type: 'sensor' };
-            mockReq.body = deviceData;
-            deviceService.createDevice.mockResolvedValue(mockDevice);
+            mockReq.body = { name: 'Test Device', type: 'sensor' };
+            mockDeviceService.createDevice.mockResolvedValue(mockDevice);
 
-            // Act
             await deviceController.createDevice(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.createDevice).toHaveBeenCalledWith(
-                deviceData,
-                mockUser.id
-            );
+            expect(deviceService.createDevice).toHaveBeenCalledWith(mockReq.body, mockUser.id);
             expect(mockRes.status).toHaveBeenCalledWith(201);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: true,
-                device: mockDevice
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, device: mockDevice });
+        });
+
+        it('should handle errors when creating a device', async () => {
+            const error = new Error('Creation failed');
+            mockDeviceService.createDevice.mockRejectedValue(error);
+
+            await deviceController.createDevice(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Creation failed' });
         });
     });
 
     describe('getDevices', () => {
         it('should return a list of devices', async () => {
-            // Arrange
-            const queryParams = { type: 'sensor' };
             const mockDevices = [mockDevice];
-            mockReq.query = queryParams;
-            deviceService.queryDevices.mockResolvedValue(mockDevices);
+            mockDeviceService.queryDevices.mockResolvedValue(mockDevices);
 
-            // Act
             await deviceController.getDevices(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.queryDevices).toHaveBeenCalledWith(
-                queryParams,
-                mockUser.id
-            );
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: true,
-                devices: mockDevices
-            });
+            expect(deviceService.queryDevices).toHaveBeenCalledWith(mockReq.query, mockUser.id);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, devices: mockDevices });
+        });
+
+        it('should handle errors when fetching devices', async () => {
+            const error = new Error('Fetch failed');
+            mockDeviceService.queryDevices.mockRejectedValue(error);
+
+            await deviceController.getDevices(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Fetch failed' });
         });
     });
 
     describe('getDevice', () => {
         it('should return a device by id', async () => {
-            // Arrange
-            const deviceId = 'device123';
-            mockReq.params.id = deviceId;
-            deviceService.getDeviceById.mockResolvedValue(mockDevice);
+            mockReq.params.id = 'device123';
+            mockDeviceService.getDeviceById.mockResolvedValue(mockDevice);
 
-            // Act
             await deviceController.getDevice(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.getDeviceById).toHaveBeenCalledWith(
-                deviceId,
-                mockUser.id
-            );
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: true,
-                device: mockDevice
-            });
+            expect(deviceService.getDeviceById).toHaveBeenCalledWith('device123', mockUser.id);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, device: mockDevice });
         });
 
         it('should return 404 if device not found', async () => {
-            // Arrange
-            const deviceId = 'non-existent';
-            mockReq.params.id = deviceId;
-            deviceService.getDeviceById.mockResolvedValue(null);
+            mockReq.params.id = 'non-existent';
+            mockDeviceService.getDeviceById.mockResolvedValue(null);
 
-            // Act
             await deviceController.getDevice(mockReq, mockRes);
 
-            // Assert
             expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: false,
-                message: 'Device not found'
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Device not found' });
         });
     });
 
     describe('updateDevice', () => {
         it('should update a device successfully', async () => {
-            // Arrange
-            const deviceId = 'device123';
-            const updateData = { name: 'Updated Device' };
-            mockReq.params.id = deviceId;
-            mockReq.body = updateData;
-            deviceService.updateDeviceById.mockResolvedValue(mockDevice);
+            mockReq.params.id = 'device123';
+            mockReq.body = { name: 'Updated Device' };
+            mockDeviceService.updateDeviceById.mockResolvedValue(mockDevice);
 
-            // Act
             await deviceController.updateDevice(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.updateDeviceById).toHaveBeenCalledWith(
-                deviceId,
-                updateData,
-                mockUser.id
-            );
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: true,
-                device: mockDevice
-            });
+            expect(deviceService.updateDeviceById).toHaveBeenCalledWith('device123', mockReq.body, mockUser.id);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, device: mockDevice });
         });
 
-        it('should handle update errors', async () => {
-            // Arrange
+        it('should handle errors when updating a device', async () => {
             const error = new Error('Device not found');
             mockReq.params.id = 'non-existent';
-            deviceService.updateDeviceById.mockRejectedValue(error);
+            mockDeviceService.updateDeviceById.mockRejectedValue(error);
 
-            // Act
             await deviceController.updateDevice(mockReq, mockRes);
 
-            // Assert
             expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: false,
-                message: 'Device not found'
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Device not found' });
         });
     });
 
     describe('deleteDevice', () => {
         it('should delete a device successfully', async () => {
-            // Arrange
-            const deviceId = 'device123';
-            mockReq.params.id = deviceId;
-            deviceService.deleteDeviceById.mockResolvedValue(true);
+            mockReq.params.id = 'device123';
+            mockDeviceService.deleteDeviceById.mockResolvedValue(true);
 
-            // Act
             await deviceController.deleteDevice(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.deleteDeviceById).toHaveBeenCalledWith(
-                deviceId,
-                mockUser.id
-            );
+            expect(deviceService.deleteDeviceById).toHaveBeenCalledWith('device123', mockUser.id);
             expect(mockRes.status).toHaveBeenCalledWith(200);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: true,
-                message: 'Device deleted successfully'
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true, message: 'Device deleted successfully' });
         });
 
-        it('should handle delete errors', async () => {
-            // Arrange
+        it('should handle errors when deleting a device', async () => {
             const error = new Error('Device not found');
             mockReq.params.id = 'non-existent';
-            deviceService.deleteDeviceById.mockRejectedValue(error);
+            mockDeviceService.deleteDeviceById.mockRejectedValue(error);
 
-            // Act
             await deviceController.deleteDevice(mockReq, mockRes);
 
-            // Assert
             expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: false,
-                message: 'Device not found'
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Device not found' });
         });
     });
 
     describe('updateHeartbeat', () => {
         it('should update device heartbeat successfully', async () => {
-            // Arrange
-            const deviceId = 'device123';
-            mockReq.params.id = deviceId;
-            deviceService.updateDeviceHeartbeat.mockResolvedValue(mockDevice);
+            mockReq.params.id = 'device123';
+            mockDeviceService.updateDeviceHeartbeat.mockResolvedValue(mockDevice);
 
-            // Act
             await deviceController.updateHeartbeat(mockReq, mockRes);
 
-            // Assert
-            expect(deviceService.updateDeviceHeartbeat).toHaveBeenCalledWith(
-                deviceId,
-                mockUser.id
-            );
-            expect(mockRes.send).toHaveBeenCalledWith({
+            expect(deviceService.updateDeviceHeartbeat).toHaveBeenCalledWith('device123', mockUser.id);
+            expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
                 message: 'Device heartbeat recorded',
                 last_active_at: mockDevice.lastActiveAt.toISOString()
             });
         });
 
-        it('should handle heartbeat update errors', async () => {
-            // Arrange
+        it('should handle errors when updating heartbeat', async () => {
             const error = new Error('Device not found');
             mockReq.params.id = 'non-existent';
-            deviceService.updateDeviceHeartbeat.mockRejectedValue(error);
+            mockDeviceService.updateDeviceHeartbeat.mockRejectedValue(error);
 
-            // Act
             await deviceController.updateHeartbeat(mockReq, mockRes);
 
-            // Assert
             expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.send).toHaveBeenCalledWith({
-                success: false,
-                message: 'Device not found'
-            });
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: 'Device not found' });
         });
     });
 });
