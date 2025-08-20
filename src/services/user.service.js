@@ -6,17 +6,18 @@ import ApiError from '../utils/apiError.js';
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
+import { hashPassword } from '../utils/password.js';
+
 const createUser = async (userBody) => {
-    // Check if email already exists
     const existingUser = await User.findOne({ email: userBody.email });
     if (existingUser) {
-        // Using plain status code instead of http-status
         throw new ApiError(400, 'Email already taken');
     }
 
-    // Create and save user
-    const user = await User.create(userBody);
-    return user.toJSON(); // ensures password is stripped out
+    // Hash the password before creating the user
+    const hashedPassword = await hashPassword(userBody.password);
+    const user = await User.create({ ...userBody, password: hashedPassword });
+    return user.toJSON();
 };
 
 /**
@@ -24,8 +25,12 @@ const createUser = async (userBody) => {
  * @param {string} email
  * @returns {Promise<User | null>}
  */
-const getUserByEmail = async (email) => {
-    return User.findOne({ email });
+const getUserByEmail = async (email, includePassword = false) => {
+    const query = User.findOne({ email });
+    if (includePassword) {
+        query.select('+password');
+    }
+    return query.exec();
 };
 
 /**

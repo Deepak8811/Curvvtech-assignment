@@ -1,5 +1,6 @@
 import userService from '../../services/user.service.js';
 import authService from '../../services/auth.service.js';
+import tokenService from '../../services/token.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 /**
@@ -9,20 +10,23 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
  */
 const register = asyncHandler(async (req, res) => {
     const user = await userService.createUser(req.body);
-
-    // Generate auth tokens after successful registration
-    const tokens = await authService.generateAuthTokens(user);
+    
+    const userObj = user.toObject();
+    if (userObj._id && !userObj.id) {
+        userObj.id = userObj._id.toString();
+    }
+    
+    const tokens = await tokenService.generateAuthTokens(userObj);
 
     return res.status(201).json({
         success: true,
-        message: 'User registered successfully',
+        token: tokens.access.token,
         user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        },
-        tokens,
+            id: userObj.id,
+            name: userObj.name,
+            email: userObj.email,
+            role: userObj.role,
+        }
     });
 });
 
@@ -41,14 +45,13 @@ const login = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
         success: true,
-        message: 'Login successful',
+        token: tokens.access.token,
         user: {
-            id: user.id,
+            id: user._id || user.id,
             name: user.name,
             email: user.email,
             role: user.role,
-        },
-        tokens,
+        }
     });
 });
 

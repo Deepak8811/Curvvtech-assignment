@@ -25,10 +25,27 @@ const generateToken = (userId, expires, type, secret = config.jwt.accessSecret) 
  * @returns {Promise<Object>}
  */
 const generateAuthTokens = async (user) => {
-  const accessTokenExpires = Math.floor(Date.now() / 1000) + config.jwt.accessExpirationMinutes * 60;
+  // Convert JWT TTL strings to seconds
+  const getExpirationInSeconds = (ttl) => {
+    const match = ttl.match(/^(\d+)([smhd])$/);
+    if (!match) return 3600; // Default to 1 hour if format is invalid
+    
+    const value = parseInt(match[1]);
+    const unit = match[2];
+    
+    switch (unit) {
+      case 's': return value; // seconds
+      case 'm': return value * 60; // minutes
+      case 'h': return value * 60 * 60; // hours
+      case 'd': return value * 24 * 60 * 60; // days
+      default: return 3600; // Default to 1 hour
+    }
+  };
+
+  const accessTokenExpires = Math.floor(Date.now() / 1000) + getExpirationInSeconds(config.jwt.accessExpiration);
   const accessToken = generateToken(user.id, accessTokenExpires, 'access');
 
-  const refreshTokenExpires = Math.floor(Date.now() / 1000) + config.jwt.refreshExpirationDays * 24 * 60 * 60;
+  const refreshTokenExpires = Math.floor(Date.now() / 1000) + getExpirationInSeconds(config.jwt.refreshExpiration);
   const refreshToken = generateToken(user.id, refreshTokenExpires, 'refresh', config.jwt.refreshSecret);
 
   return {

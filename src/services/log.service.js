@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import DeviceLog from '../models/deviceLog.model.js';
-import * as deviceService from './device.service.js';
+import deviceService from './device.service.js';
 
 /**
  * Create a device log

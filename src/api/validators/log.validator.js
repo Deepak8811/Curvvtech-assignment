@@ -15,7 +15,7 @@ const getLogs = {
 
 const getUsage = {
     query: Joi.object().keys({
-        range: Joi.string().pattern(new RegExp('^\d+[hdw]$')).default('24h'),
+        range: Joi.string().pattern(/^\d+[hdw]$/).default('24h'),
     }),
 };
 

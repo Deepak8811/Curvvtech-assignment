@@ -24,6 +24,20 @@ const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
 
 passport.use(jwtStrategy);
 
-const auth = () => passport.authenticate('jwt', { session: false });
+const auth = () => (req, res, next) => {
+    passport.authenticate('jwt', { session: false }, (err, user, info) => {
+        if (err) {
+            return next(err);
+        }
+        if (!user) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Please authenticate' 
+            });
+        }
+        req.user = user;
+        next();
+    })(req, res, next);
+};
 
 export default auth;

@@ -20,13 +20,13 @@ const userSchema = new mongoose.Schema(
                 /^\S+@\S+\.\S+$/,
                 "Please provide a valid email address",
             ],
-            index: true, // Faster queries on email
+            index: true,
         },
         password: {
             type: String,
             required: [true, "Password is required"],
             minlength: [8, "Password must be at least 8 characters long"],
-            select: false, // Never return password by default
+            select: false,
         },
         role: {
             type: String,
