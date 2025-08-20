@@ -33,7 +33,7 @@ const config = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   mongoose: {
-    uri: envVars.MONGO_URI + (envVars.NODE_ENV === 'test' ? '-test' : ''), // 👈 should be "uri" (not "url")
+    uri: envVars.MONGO_URI + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
